@@ -1,4 +1,4 @@
-package com.assafnativ.synesthesia;
+package com.synesthesia;
 
 import android.graphics.Color;
 import android.graphics.drawable.ShapeDrawable;

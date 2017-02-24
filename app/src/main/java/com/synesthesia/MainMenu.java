@@ -1,4 +1,4 @@
-package com.assafnativ.synesthesia;
+package com.synesthesia;
 
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;

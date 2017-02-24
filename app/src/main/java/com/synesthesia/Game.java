@@ -2,7 +2,7 @@
  * Created by nativ on 2017-02-23.
  */
 
-package com.assafnativ.synesthesia;
+package com.synesthesia;
 
 import java.util.Arrays;
 

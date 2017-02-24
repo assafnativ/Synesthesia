@@ -1,4 +1,4 @@
-package com.assafnativ.synesthesia;
+package com.synesthesia;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getTargetContext();
 
-        assertEquals("com.assafnativ.synesthesia", appContext.getPackageName());
+        assertEquals("com.synesthesia", appContext.getPackageName());
     }
 }
