@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.view.View;
 
 public class MainMenu extends AppCompatActivity {
+    static public boolean isTestMode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -14,7 +15,9 @@ public class MainMenu extends AppCompatActivity {
     }
 
     public void onStartButtonClick(View view) {
-
+        isTestMode = false;
+        Intent intent = new Intent(this, GameActivity.class);
+        startActivity(intent);
     }
 
     public void onSettingsButtonClick(View view) {
@@ -22,6 +25,7 @@ public class MainMenu extends AppCompatActivity {
     }
 
     public void onTestButtonClick(View view) {
+        isTestMode = true;
         Intent intent = new Intent(this, GameActivity.class);
         startActivity(intent);
     }

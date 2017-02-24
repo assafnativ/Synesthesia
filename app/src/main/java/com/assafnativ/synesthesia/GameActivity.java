@@ -1,17 +1,19 @@
 package com.assafnativ.synesthesia;
 
+import android.graphics.Color;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.OvalShape;
-import android.graphics.drawable.shapes.RectShape;
+import android.graphics.drawable.shapes.Shape;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.SoundPool;
-import android.os.ParcelFileDescriptor;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 public class GameActivity extends AppCompatActivity {
     protected static class ClickersInfo {
@@ -25,8 +27,13 @@ public class GameActivity extends AppCompatActivity {
             color = _color;
             soundId = _soundId;
         }
+
+        public Button button;
+        public int clickSound;
+        public ShapeDrawable clickedShape;
+        public ShapeDrawable idleShape;
     }
-    protected final static ClickersInfo CLICKERS_INFO[] = {
+    protected final static ClickersInfo clickers[] = {
             new ClickersInfo( 1, "One",   0x7ff40000, R.raw.dtmf_1 ),
             new ClickersInfo( 2, "Two",   0x7ff47a00, R.raw.dtmf_2 ),
             new ClickersInfo( 3, "Three", 0x7fffe314, R.raw.dtmf_3 ),
@@ -39,66 +46,69 @@ public class GameActivity extends AppCompatActivity {
             new ClickersInfo( 0, "Zero",  0x7f303030, R.raw.dtmf_0 )
     };
     protected static int BUTTONS_ID = 0x100;
-    protected static Button[] clickers;
     protected RelativeLayout mainLayout;
-    protected static int clickersSounds[];
     protected SoundPool soundPool;
     final int TOP_ID = 0xff;
     final int BOTTOM_ID = 0xfe;
+    protected Game game;
+    protected TextView counterTextBox;
+    protected int lastTone;
     protected void initClickers()
     {
-        if ((null != clickers) && (clickers.length == CLICKERS_INFO.length)) {
-            return;
-        }
-        mainLayout = new RelativeLayout(this);
-
-        clickers = new Button[CLICKERS_INFO.length];
         for (int i = 0; i < clickers.length; ++i) {
-            clickers[i] = new Button(this);
-            OvalShape clickerShape = new OvalShape();
-            ShapeDrawable drawable = new ShapeDrawable(clickerShape);
-            drawable.getPaint().setColor(CLICKERS_INFO[i].color);
+            if (null != clickers[i].button) {
+                continue;
+            }
+            clickers[i].button = new Button(this);
+            OvalShape clickerIdleShape = new OvalShape();
+            OvalShape clickerClickedShape = new OvalShape();
+            ShapeDrawable clickerIdleDrawable = new ShapeDrawable(clickerIdleShape);
+            ShapeDrawable clickerClickedDrawable = new ShapeDrawable(clickerClickedShape);
+            clickerIdleDrawable.getPaint().setColor(getClickerColor(i));
+            clickerClickedDrawable.getPaint().setColor(makeColorDarker(getClickerColor(i), 20));
+            clickers[i].idleShape = clickerIdleDrawable;
+            clickers[i].clickedShape = clickerClickedDrawable;
 
-            clickers[i].setBackground(drawable);
-            clickers[i].setText(CLICKERS_INFO[i].name);
-            clickers[i].setAllCaps(true);
-            clickers[i].setId(BUTTONS_ID + i);
-            clickers[i].setOnClickListener(new View.OnClickListener() {
+            clickers[i].button.setBackground(clickerIdleDrawable);
+            clickers[i].button.setText(clickers[i].name);
+            clickers[i].button.setAllCaps(true);
+            clickers[i].button.setId(BUTTONS_ID + i);
+            clickers[i].button.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     onClickerClick(view);
                 }
             });
 
-            if (0 == i) {
-                mainLayout.addView(clickers[i]);
-            } else {
-                RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(
-                        RelativeLayout.LayoutParams.WRAP_CONTENT,
-                        RelativeLayout.LayoutParams.WRAP_CONTENT);
-                lp.setMargins(15, 15, 0, 0);
+            RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(
+                    RelativeLayout.LayoutParams.WRAP_CONTENT,
+                    RelativeLayout.LayoutParams.WRAP_CONTENT);
+            lp.setMargins(15, 15, 0, 0);
+            if (0 < i) {
                 if (0 != (i % 3)) {
-                    lp.addRule(RelativeLayout.RIGHT_OF, clickers[i - 1].getId());
+                    lp.addRule(RelativeLayout.RIGHT_OF, clickers[i - 1].button.getId());
                 }
                 if (i >= 3) {
-                    lp.addRule(RelativeLayout.BELOW, clickers[i - 3].getId());
+                    lp.addRule(RelativeLayout.BELOW, clickers[i - 3].button.getId());
                 }
-                mainLayout.addView(clickers[i], lp);
             }
+            mainLayout.addView(clickers[i].button, lp);
         }
-        this.setContentView(mainLayout);
+    }
+
+    protected int getClickerColor(int clickerIndex) {
+        return clickers[clickerIndex].color;
     }
 
     protected void onClickerClick(View view) {
         int clickerIndex = view.getId() - BUTTONS_ID;
-        mainLayout.setBackgroundColor(CLICKERS_INFO[clickerIndex].color);
-
-        soundPool.play(clickersSounds[clickerIndex], 1f, 1f, 1, 0, 1f);
+        mainLayout.setBackgroundColor(getClickerColor(clickerIndex));
+        soundPool.play(clickers[clickerIndex].clickSound, 1f, 1f, 1, 0, 1f);
     }
 
     protected void loadSounds()
     {
-        if ((null != clickersSounds) && (clickersSounds.length == CLICKERS_INFO.length)) {
+        if (null != soundPool) {
             return;
         }
 
@@ -108,22 +118,87 @@ public class GameActivity extends AppCompatActivity {
                 .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                 .build();
         soundPool = new SoundPool.Builder()
-                .setMaxStreams(CLICKERS_INFO.length + 1)
+                .setMaxStreams(clickers.length + 1)
                 .setAudioAttributes(audioAttributes)
                 .build();
-        clickersSounds = new int[CLICKERS_INFO.length];
-        for (int i = 0; i < clickersSounds.length; ++i) {
-            clickersSounds[i] = soundPool.load(this, CLICKERS_INFO[i].soundId, 1);
+        for (int i = 0; i < clickers.length; ++i) {
+            clickers[i].clickSound = soundPool.load(this, clickers[i].soundId, 1);
         }
+    }
+
+    protected int makeColorDarker(int c, int darkPercent) {
+        int red = Color.red(c);
+        int green = Color.green(c);
+        int blue = Color.blue(c);
+        red = Math.max(0, red - (red * darkPercent / 100));
+        green = Math.max(0, green - (green * darkPercent / 100));
+        blue = Math.max(0, blue - (blue * darkPercent / 100));
+        return Color.rgb(red, green, blue);
+    }
+
+    protected void playTone(int tone) {
+        soundPool.play(clickers[tone].clickSound, 1f, 1f, 1, 0, 1f);
+    }
+
+    protected void updateCounter() {
+        counterTextBox.setText(Integer.toString(game.nextNumberIndex));
+    }
+
+    protected void makeClickerDark(int clickerIndex) {
+        clickers[clickerIndex].button.setBackground(
+                clickers[clickerIndex].clickedShape);
+    }
+
+    protected void setClickerToDefaultColor(int clickerIndex) {
+        clickers[clickerIndex].button.setBackground(
+                clickers[clickerIndex].idleShape);
+    }
+
+    protected int numberToClickerIndex(int num) {
+        if (0 == num) {
+            return 9;
+        }
+        return num - 1;
+    }
+
+    protected void playNext() {
+        lastTone = game.getNextNumber();
+        int clickerIndex = numberToClickerIndex(lastTone);
+        makeClickerDark(clickerIndex);
+        playTone(clickerIndex);
+        Handler restoreClickerColorHandler = new Handler();
+        restoreClickerColorHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                setClickerToDefaultColor(numberToClickerIndex(lastTone));
+            }
+        }, 200);
+        updateCounter();
+    }
+
+    protected void startGame() {
+        playNext();
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_game);
+        if (null == mainLayout) {
+            setContentView(R.layout.activity_game);
+            mainLayout = (RelativeLayout)findViewById(R.id.activity_game);
+        }
+        counterTextBox = (TextView)findViewById(R.id.counterTextBox);
         loadSounds();
         initClickers();
+
+        game = new Game();
+        updateCounter();
+        Handler startGameHandler = new Handler();
+        startGameHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                startGame();
+            }
+        }, 1000);
     }
-
-
 }

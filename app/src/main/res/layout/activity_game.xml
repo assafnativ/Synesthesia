@@ -10,4 +10,32 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.assafnativ.synesthesia.GameActivity">
 
+    <Button
+        android:id="@+id/lessButton"
+        android:text="Less"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:onClick="onLessButtonClick" />
+
+    <Button
+        android:id="@+id/moreButton"
+        android:text="More"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/lessButton"
+        android:layout_alignParentEnd="true"
+        android:onClick="onMoreButtonClick" />
+
+    <TextView
+        android:id="@+id/counterTextBox"
+        android:text="0"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignStart="@+id/moreButton"
+        android:layout_above="@+id/moreButton"
+        android:layout_alignParentEnd="true"
+        android:textSize="24sp"
+        android:textAlignment="center" />
 </RelativeLayout>
