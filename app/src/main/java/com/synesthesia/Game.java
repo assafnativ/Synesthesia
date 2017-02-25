@@ -15,6 +15,7 @@ public class Game {
     }
     protected int[] sequence;
     protected int nextNumberIndex;
+    protected int playerIndex;
 
     public Game() {
         String sequenceStr = new String("314159265358979323846264");
@@ -47,11 +48,25 @@ public class Game {
 
     int getNextNumber() {
         if (isEndOfSequence()) {
-            throw new RuntimeException("Next number out of srquence");
+            throw new RuntimeException("Next number out of sequence");
         }
+        playerIndex = 0;
         int result = sequence[nextNumberIndex];
         nextNumberIndex += 1;
         return result;
+    }
+
+    int getNextPlayerNumber() {
+        if (isPlayerDoneHisTurn()) {
+            throw  new RuntimeException("Player out of sequance");
+        }
+        int result = sequence[playerIndex];
+        playerIndex += 1;
+        return result;
+    }
+
+    void resetPlayer() {
+        playerIndex = 0;
     }
 
     int[] getNumbersSoFar() {
@@ -61,4 +76,5 @@ public class Game {
     boolean isEndOfSequence() {
         return (nextNumberIndex >= sequence.length);
     }
+    boolean isPlayerDoneHisTurn() { return (playerIndex == nextNumberIndex); }
 }

@@ -48,11 +48,14 @@ public class GameActivity extends AppCompatActivity {
     protected static int BUTTONS_ID = 0x100;
     protected RelativeLayout mainLayout;
     protected SoundPool soundPool;
+    protected int failSound;
+    protected int successSound;
     final int TOP_ID = 0xff;
     final int BOTTOM_ID = 0xfe;
     protected Game game;
     protected TextView counterTextBox;
     protected int lastTone;
+
     protected void initClickers()
     {
         for (int i = 0; i < clickers.length; ++i) {
@@ -103,7 +106,17 @@ public class GameActivity extends AppCompatActivity {
     protected void onClickerClick(View view) {
         int clickerIndex = view.getId() - BUTTONS_ID;
         mainLayout.setBackgroundColor(getClickerColor(clickerIndex));
-        soundPool.play(clickers[clickerIndex].clickSound, 1f, 1f, 1, 0, 1f);
+        playTone(clickerIndex);
+
+        int value = clickers[clickerIndex].value;
+        int nextExpected = game.getNextPlayerNumber();
+        if (value != nextExpected) {
+            playFailSound();
+            game.resetPlayer();
+        }
+        if (game.isPlayerDoneHisTurn()) {
+            playNext();
+        }
     }
 
     protected void loadSounds()
@@ -124,6 +137,9 @@ public class GameActivity extends AppCompatActivity {
         for (int i = 0; i < clickers.length; ++i) {
             clickers[i].clickSound = soundPool.load(this, clickers[i].soundId, 1);
         }
+
+        failSound = soundPool.load(this, R.raw.fail, 1);
+        successSound = soundPool.load(this, R.raw.success, 1);
     }
 
     protected int makeColorDarker(int c, int darkPercent) {
@@ -138,6 +154,14 @@ public class GameActivity extends AppCompatActivity {
 
     protected void playTone(int tone) {
         soundPool.play(clickers[tone].clickSound, 1f, 1f, 1, 0, 1f);
+    }
+
+    protected void playFailSound() {
+        soundPool.play(failSound, 1f, 1f, 1, 0, 1f);
+    }
+
+    protected void playSuccessSound() {
+        soundPool.play(successSound, 1f, 1f, 1, 0, 1f);
     }
 
     protected void updateCounter() {
