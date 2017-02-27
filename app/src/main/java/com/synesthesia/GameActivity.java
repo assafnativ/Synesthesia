@@ -8,12 +8,15 @@ import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import android.os.Handler;
+import android.os.SystemClock;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+
+import static java.lang.Thread.sleep;
 
 public class GameActivity extends AppCompatActivity {
     protected static class ClickersInfo {
@@ -54,6 +57,7 @@ public class GameActivity extends AppCompatActivity {
     final int BOTTOM_ID = 0xfe;
     protected Game game;
     protected TextView counterTextBox;
+    protected int clickedClickerIndex;
     protected int lastTone;
 
     protected void initClickers()
@@ -68,7 +72,7 @@ public class GameActivity extends AppCompatActivity {
             ShapeDrawable clickerIdleDrawable = new ShapeDrawable(clickerIdleShape);
             ShapeDrawable clickerClickedDrawable = new ShapeDrawable(clickerClickedShape);
             clickerIdleDrawable.getPaint().setColor(getClickerColor(i));
-            clickerClickedDrawable.getPaint().setColor(makeColorDarker(getClickerColor(i), 20));
+            clickerClickedDrawable.getPaint().setColor(makeColorDarker(getClickerColor(i), 40));
             clickers[i].idleShape = clickerIdleDrawable;
             clickers[i].clickedShape = clickerClickedDrawable;
 
@@ -104,19 +108,53 @@ public class GameActivity extends AppCompatActivity {
     }
 
     protected void onClickerClick(View view) {
-        int clickerIndex = view.getId() - BUTTONS_ID;
-        mainLayout.setBackgroundColor(getClickerColor(clickerIndex));
-        playTone(clickerIndex);
+        clickedClickerIndex = view.getId() - BUTTONS_ID;
+        mainLayout.setBackgroundColor(getClickerColor(clickedClickerIndex));
+        Handler restoreClickerColorHandler = new Handler();
+        restoreClickerColorHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                playTone(clickedClickerIndex);
 
-        int value = clickers[clickerIndex].value;
-        int nextExpected = game.getNextPlayerNumber();
-        if (value != nextExpected) {
-            playFailSound();
-            game.resetPlayer();
+                int value = clickers[clickedClickerIndex].value;
+                int nextExpected = game.getNextPlayerNumber();
+                if (value != nextExpected) {
+                    playFailSound();
+                    game.resetPlayer();
+                }
+                if (game.isPlayerDoneHisTurn()) {
+                    SystemClock.sleep(1000);
+                    advanceGameByOne();
+                }
+            }
+        }, 10);
+    }
+
+    protected void onMoreButtonClick(View view) {
+        advanceGameByOne();
+    }
+
+    protected void onLessButtonClick(View view) {
+        gameOneStepBack();
+    }
+
+    protected void advanceGameByOne()
+    {
+        if (game.isEndOfSequence()) {
+            return;
         }
-        if (game.isPlayerDoneHisTurn()) {
-            playNext();
-        }
+        game.getNextNumber();
+        updateCounter();
+        // Change game state
+        playNext();
+    }
+
+    protected void gameOneStepBack()
+    {
+        game.getPrevNumber();
+        updateCounter();
+        // Change game state
+        playNext();
     }
 
     protected void loadSounds()
@@ -186,7 +224,11 @@ public class GameActivity extends AppCompatActivity {
     }
 
     protected void playNext() {
-        lastTone = game.getNextNumber();
+        if (game.isPlayingDone()) {
+            // Change game state
+            return;
+        }
+        lastTone = game.getNextNumberToPlay();
         int clickerIndex = numberToClickerIndex(lastTone);
         makeClickerDark(clickerIndex);
         playTone(clickerIndex);
@@ -195,12 +237,13 @@ public class GameActivity extends AppCompatActivity {
             @Override
             public void run() {
                 setClickerToDefaultColor(numberToClickerIndex(lastTone));
+                playNext();
             }
-        }, 200);
-        updateCounter();
+        }, 500);
     }
 
     protected void startGame() {
+        updateCounter();
         playNext();
     }
 
@@ -216,7 +259,6 @@ public class GameActivity extends AppCompatActivity {
         initClickers();
 
         game = new Game();
-        updateCounter();
         Handler startGameHandler = new Handler();
         startGameHandler.postDelayed(new Runnable() {
             @Override

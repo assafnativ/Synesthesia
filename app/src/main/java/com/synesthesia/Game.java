@@ -16,9 +16,10 @@ public class Game {
     protected int[] sequence;
     protected int nextNumberIndex;
     protected int playerIndex;
+    protected int playingIndex;
 
     public Game() {
-        String sequenceStr = new String("314159265358979323846264");
+        String sequenceStr = new String("31415926535897932384626433832795028841971693993751");
         isSequenceValid(sequenceStr);
         sequence = sequenceFromString(sequenceStr);
         reset();
@@ -42,8 +43,11 @@ public class Game {
         return true;
     }
 
-    public void reset() {
-        nextNumberIndex = 0;
+    public void reset()
+    {
+        nextNumberIndex = 1;
+        playerIndex = 0;
+        playingIndex = 0;
     }
 
     int getNextNumber() {
@@ -51,14 +55,33 @@ public class Game {
             throw new RuntimeException("Next number out of sequence");
         }
         playerIndex = 0;
+        playingIndex = 0;
         int result = sequence[nextNumberIndex];
         nextNumberIndex += 1;
         return result;
     }
 
+    int getPrevNumber() {
+        if (0 < nextNumberIndex) {
+            nextNumberIndex -= 1;
+        }
+        playerIndex = 0;
+        playingIndex = 0;
+        return sequence[nextNumberIndex];
+    }
+
+    int getNextNumberToPlay() {
+        if (isPlayingDone()) {
+            throw new RuntimeException("Playing out of sequance");
+        }
+        int result = sequence[playingIndex];
+        playingIndex += 1;
+        return result;
+    }
+
     int getNextPlayerNumber() {
         if (isPlayerDoneHisTurn()) {
-            throw  new RuntimeException("Player out of sequance");
+            throw new RuntimeException("Player out of sequance");
         }
         int result = sequence[playerIndex];
         playerIndex += 1;
@@ -76,5 +99,6 @@ public class Game {
     boolean isEndOfSequence() {
         return (nextNumberIndex >= sequence.length);
     }
-    boolean isPlayerDoneHisTurn() { return (playerIndex == nextNumberIndex); }
+    boolean isPlayerDoneHisTurn() { return (playerIndex >= nextNumberIndex); }
+    boolean isPlayingDone() { return (playingIndex >= nextNumberIndex); }
 }
