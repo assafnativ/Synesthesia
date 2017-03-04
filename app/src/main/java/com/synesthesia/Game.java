@@ -4,8 +4,6 @@
 
 package com.synesthesia;
 
-import java.util.Arrays;
-
 public class Game {
     public enum GameState {
         START,
@@ -18,8 +16,8 @@ public class Game {
     protected int playerIndex;
     protected int playingIndex;
 
-    public Game() {
-        String sequenceStr = new String("31415926535897932384626433832795028841971693993751");
+    public Game(String playSequence) {
+        String sequenceStr = playSequence;
         isSequenceValid(sequenceStr);
         sequence = sequenceFromString(sequenceStr);
         reset();
@@ -90,10 +88,6 @@ public class Game {
 
     void resetPlayer() {
         playerIndex = 0;
-    }
-
-    int[] getNumbersSoFar() {
-        return Arrays.copyOfRange(sequence, 0, nextNumberIndex);
     }
 
     boolean isEndOfSequence() {

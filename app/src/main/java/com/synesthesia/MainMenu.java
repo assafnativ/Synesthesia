@@ -16,7 +16,7 @@ public class MainMenu extends AppCompatActivity {
 
     public void onStartButtonClick(View view) {
         isTestMode = false;
-        Intent intent = new Intent(this, GameActivity.class);
+        Intent intent = new Intent(this, StartGame.class);
         startActivity(intent);
     }
 
@@ -27,6 +27,7 @@ public class MainMenu extends AppCompatActivity {
     public void onTestButtonClick(View view) {
         isTestMode = true;
         Intent intent = new Intent(this, GameActivity.class);
+        intent.putExtra(StartGame.SEQUENCE_TO_PLAY, "");
         startActivity(intent);
     }
 }

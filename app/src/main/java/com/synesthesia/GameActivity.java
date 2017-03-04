@@ -1,5 +1,6 @@
 package com.synesthesia;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.OvalShape;
@@ -123,6 +124,8 @@ public class GameActivity extends AppCompatActivity {
                     game.resetPlayer();
                 }
                 if (game.isPlayerDoneHisTurn()) {
+                    SystemClock.sleep(200);
+                    playSuccessSound();
                     SystemClock.sleep(1000);
                     advanceGameByOne();
                 }
@@ -258,7 +261,15 @@ public class GameActivity extends AppCompatActivity {
         loadSounds();
         initClickers();
 
-        game = new Game();
+        Intent intent = getIntent();
+        String sequeneceToPlay = intent.getStringExtra(StartGame.SEQUENCE_TO_PLAY);
+        if (0 == sequeneceToPlay.length()) {
+            if (null == game) {
+                game = new Game("1234567890");
+            }
+        } else {
+            game = new Game(sequeneceToPlay);
+        }
         Handler startGameHandler = new Handler();
         startGameHandler.postDelayed(new Runnable() {
             @Override
